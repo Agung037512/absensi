@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Absensi Shift + Lokasi</title>
   <style>
     body {
@@ -34,10 +34,10 @@
   <h2>Form Absensi Shift</h2>
   
   <label for="nama">Nama / NIK:</label>
-  <input type="text" id="nama" placeholder="Masukkan Nama atau NIK" required>
+  <input type="text" id="nama" placeholder="Masukkan Nama atau NIK" required />
 
   <label for="tanggal">Tanggal:</label>
-  <input type="date" id="tanggal" required>
+  <input type="date" id="tanggal" required />
 
   <label for="shift">Shift:</label>
   <select id="shift">
@@ -55,12 +55,19 @@
   <script>
     let map;
 
+    // Inisialisasi peta dengan koordinat default supaya tidak error sebelum lokasi didapat
+    function initMap() {
+      const defaultLocation = { lat: -6.200000, lng: 106.816666 }; // Jakarta sebagai default
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 10,
+        center: defaultLocation,
+      });
+    }
+
     function showMap(lat, lng) {
       const location = { lat: lat, lng: lng };
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 15,
-        center: location,
-      });
+      map.setCenter(location);
+      map.setZoom(15);
       new google.maps.Marker({
         position: location,
         map: map,
@@ -88,45 +95,55 @@
       status.style.color = "black";
       status.innerText = "Mengambil lokasi...";
 
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
 
-        // Tampilkan peta
-        showMap(latitude, longitude);
+          // Tampilkan peta
+          showMap(latitude, longitude);
 
-        const data = {
-          nama: nama,
-          tanggal: tanggal,
-          shift: shift,
-          latitude: latitude,
-          longitude: longitude
-        };
+          const data = {
+            nama: nama,
+            tanggal: tanggal,
+            shift: shift,
+            latitude: latitude,
+            longitude: longitude
+          };
 
-        fetch("https://script.google.com/macros/s/AKfycbzs-Q9rNffIAt0Eqy5so2_1ypXJ8gfgz97CaJs6-5U/dev", {
-          method: "POST",
-          body: JSON.stringify(data),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
-        .then(response => response.text())
-        .then(result => {
-          status.style.color = "green";
-          status.innerText = result;
-        })
-        .catch(error => {
+          fetch("https://script.google.com/macros/s/AKfycbzs-Q9rNffIAt0Eqy5so2_1ypXJ8gfgz97CaJs6-5U/dev", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          })
+          .then(response => response.text())
+          .then(result => {
+            status.style.color = "green";
+            status.innerText = result;
+          })
+          .catch(error => {
+            status.style.color = "red";
+            status.innerText = "Gagal absen: " + error;
+          });
+        },
+        function() {
           status.style.color = "red";
-          status.innerText = "Gagal absen: " + error;
-        });
-      }, function() {
-        status.style.color = "red";
-        status.innerText = "Gagal mendapatkan lokasi!";
-      });
+          status.innerText = "Gagal mendapatkan lokasi!";
+        }
+      );
     }
-  </script>
 
-  <!-- Google Maps JS API (replace key below) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6QE8UUOrLMtxcI24yJKDJLEYu5Sda8yQ"></script>
+    // Tunggu API Maps siap, lalu init peta
+    function loadScript() {
+      const script = document.createElement("script");
+      script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyB6QE8UUOrLMtxcI24yJKDJLEYu5Sda8yQ&callback=initMap";
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    loadScript();
+  </script>
 </body>
 </html>
