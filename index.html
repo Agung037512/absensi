@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Absensi Shift dengan Lokasi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 8px;
+    }
+    #status {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Form Absensi Shift</h2>
+  
+  <label for="nama">Nama / NIK:</label>
+  <input type="text" id="nama" placeholder="Masukkan Nama atau NIK" required>
+
+  <label for="tanggal">Tanggal:</label>
+  <input type="date" id="tanggal" required>
+
+  <label for="shift">Shift:</label>
+  <select id="shift">
+    <option value="Shift 1 (06:00 - 14:00)">Shift 1 (06:00 - 14:00)</option>
+    <option value="Shift 2 (14:00 - 22:00)">Shift 2 (14:00 - 22:00)</option>
+    <option value="Shift 3 (22:00 - 06:00)">Shift 3 (22:00 - 06:00)</option>
+  </select>
+
+  <button onclick="absen()">Absen Sekarang</button>
+
+  <p id="status"></p>
+
+  <script>
+    function absen() {
+      const nama = document.getElementById("nama").value.trim();
+      const tanggal = document.getElementById("tanggal").value;
+      const shift = document.getElementById("shift").value;
+      const status = document.getElementById("status");
+
+      if (!nama || !tanggal) {
+        status.style.color = "red";
+        status.innerText = "Nama dan tanggal wajib diisi!";
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        status.style.color = "red";
+        status.innerText = "Geolocation tidak didukung oleh browser ini.";
+        return;
+      }
+
+      status.style.color = "black";
+      status.innerText = "Mengambil lokasi...";
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const data = {
+          nama: nama,
+          tanggal: tanggal,
+          shift: shift,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+
+        fetch("https://script.google.com/macros/s/AKfycbzs-Q9rNffIAt0Eqy5so2_1ypXJ8gfgz97CaJs6-5U/dev", {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+        .then(response => response.text())
+        .then(result => {
+          status.style.color = "green";
+          status.innerText = result;
+        })
+        .catch(error => {
+          status.style.color = "red";
+          status.innerText = "Gagal absen: " + error;
+        });
+      }, function() {
+        status.style.color = "red";
+        status.innerText = "Gagal mendapatkan lokasi!";
+      });
+    }
+  </script>
+</body>
+</html>
