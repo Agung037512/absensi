@@ -1,150 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Absensi Shift + Lokasi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi Kantor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: auto;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      color: #333;
+    }
+    form {
+      background-color: #fff;
       padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
     }
-    label {
-      font-weight: bold;
-    }
-    input, select, button {
-      
+    label, select, input {
+      display: block;
+      margin: 10px 0;
       width: 100%;
-      margin-bottom: 15px;
-      padding: 8px;
     }
-    #status {
-      font-weight: bold;
-      margin-bottom: 10px;
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
-    #map {
+    table {
+      margin-top: 30px;
       width: 100%;
-      height: 300px;
-      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    th, td {
       border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
     }
   </style>
 </head>
 <body>
-  <h2>Form Absensi Shift</h2>
-  
-  <label for="nama">Nama / NIK:</label>
-  <input type="text" id="nama" placeholder="Masukkan Nama atau NIK" required />
+  <h2>Form Absensi Kantor</h2>
+  <form id="absenForm">
+    <label for="employeeNumber">Nomor Karyawan</label>
+    <input type="text" id="employeeNumber" required>
 
-  <label for="tanggal">Tanggal:</label>
-  <input type="date" id="tanggal" required />
+    <label for="employeeName">Nama Karyawan</label>
+    <input type="text" id="employeeName" required>
 
-  <label for="shift">Shift:</label>
-  <select id="shift">
-    <option value="Shift 1 (06:00 - 14:00)">Shift 1 (06:00 - 14:00)</option>
-    <option value="Shift 2 (14:00 - 22:00)">Shift 2 (14:00 - 22:00)</option>
-    <option value="Shift 3 (22:00 - 06:00)">Shift 3 (22:00 - 06:00)</option>
-  </select>
+    <label for="shift">Shift</label>
+    <select id="shift" required>
+      <option value="Shift 1 (06:00-14:00)">Shift 1 (06:00-14:00)</option>
+      <option value="Shift 2 (14:00-23:00)">Shift 2 (14:00-23:00)</option>
+      <option value="Shift 3 (23:00-06:00)">Shift 3 (23:00-06:00)</option>
+    </select>
 
-  <button onclick="absen()">Absen Sekarang</button>
+    <button type="submit">Absen</button>
+  </form>
 
-  <p id="status"></p>
-
-  <div id="map"></div>
+  <h2>Data Absensi</h2>
+  <table id="absenTable">
+    <thead>
+      <tr>
+        <th>Nomor</th>
+        <th>Nama</th>
+        <th>Shift</th>
+        <th>Waktu Absen</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
-    let map;
+    const form = document.getElementById("absenForm");
+    const tableBody = document.querySelector("#absenTable tbody");
 
-    // Inisialisasi peta dengan koordinat default supaya tidak error sebelum lokasi didapat
-    function initMap() {
-      const defaultLocation = { lat: -6.200000, lng: 106.816666 }; // Jakarta sebagai default
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 10,
-        center: defaultLocation,
-      });
-    }
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
 
-    function showMap(lat, lng) {
-      const location = { lat: lat, lng: lng };
-      map.setCenter(location);
-      map.setZoom(15);
-      new google.maps.Marker({
-        position: location,
-        map: map,
-      });
-    }
-
-    function absen() {
-      const nama = document.getElementById("nama").value.trim();
-      const tanggal = document.getElementById("tanggal").value;
+      const number = document.getElementById("employeeNumber").value;
+      const name = document.getElementById("employeeName").value;
       const shift = document.getElementById("shift").value;
-      const status = document.getElementById("status");
+      const time = new Date().toLocaleString();
 
-      if (!nama || !tanggal) {
-        status.style.color = "red";
-        status.innerText = "Nama dan tanggal wajib diisi!";
-        return;
-      }
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${number}</td><td>${name}</td><td>${shift}</td><td>${time}</td>`;
 
-      if (!navigator.geolocation) {
-        status.style.color = "red";
-        status.innerText = "Geolocation tidak didukung oleh browser ini.";
-        return;
-      }
+      tableBody.appendChild(row);
 
-      status.style.color = "black";
-      status.innerText = "Mengambil lokasi...";
-
-      navigator.geolocation.getCurrentPosition(
-        function(position) {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          // Tampilkan peta
-          showMap(latitude, longitude);
-
-          const data = {
-            nama: nama,
-            tanggal: tanggal,
-            shift: shift,
-            latitude: latitude,
-            longitude: longitude
-          };
-
-          fetch("https://script.google.com/macros/s/AKfycbzCa_iOjocF6GjbI5j5aOOt-orXfrUvEnW3xvcZzA8gPn-Vfom6K5DuKrw74H0hlkk/exec", {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          })
-          .then(response => response.text())
-          .then(result => {
-            status.style.color = "green";
-            status.innerText = result;
-          })
-          .catch(error => {
-            status.style.color = "red";
-            status.innerText = "Gagal absen: " + error;
-          });
-        },
-        function() {
-          status.style.color = "red";
-          status.innerText = "Gagal mendapatkan lokasi!";
-        }
-      );
-    }
-
-    // Tunggu API Maps siap, lalu init peta
-    function loadScript() {
-      const script = document.createElement("script");
-      script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyB6QE8UUOrLMtxcI24yJKDJLEYu5Sda8yQ&callback=initMap";
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    loadScript();
+      form.reset();
+    });
   </script>
 </body>
 </html>
